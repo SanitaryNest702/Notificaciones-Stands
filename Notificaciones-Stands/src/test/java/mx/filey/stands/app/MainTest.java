@@ -54,7 +54,7 @@ class MainTest {
     @Test
     void alIniciarSePrecargaLaDemostracion() {
         String salida = ejecutar();
-        assertTrue(salida.contains("8 stands y 5 reservaciones"));
+        assertTrue(salida.contains("8 stands y 6 reservaciones"));
         assertTrue(salida.contains("Pronto pago ("));
     }
 
@@ -64,6 +64,8 @@ class MainTest {
         assertTrue(salida.contains("A-01"));
         assertTrue(salida.contains("B-04"));
         assertTrue(salida.contains("DISPONIBLE"));
+        assertTrue(salida.contains("RESERVADO"));
+        assertTrue(salida.contains("OCUPADO"));
         assertTrue(salida.contains("BLOQUEADO"));
     }
 
@@ -105,21 +107,23 @@ class MainTest {
     void alAvanzarLosDiasSeAvisaYSeLiberanAutomaticamenteLasReservasSinPago() {
         String salida = ejecutar("2", "20");
         assertTrue(salida.contains("[AVISO]"));
-        assertTrue(salida.contains("[VENCIDA] R-1"));
+        assertTrue(salida.contains("[VENCIDA] R-2"));
         assertTrue(salida.contains("volvio a Disponible"));
     }
 
     @Test
     void cadaReservaVenceConSuPropiaVigencia() {
-        String salida = ejecutar("2", "2");   // R-1 vence primero; R-2 y las demas siguen activas
-        assertTrue(salida.contains("[VENCIDA] R-1"));
-        assertFalse(salida.contains("[VENCIDA] R-2"));
+        String salida = ejecutar("2", "4");   // R-2 vence primero; R-4, R-5 y R-6 siguen activas
+        assertTrue(salida.contains("[VENCIDA] R-2"));
         assertFalse(salida.contains("[VENCIDA] R-4"));
+        assertFalse(salida.contains("[VENCIDA] R-5"));
+        assertFalse(salida.contains("[VENCIDA] R-6"));
     }
 
     @Test
     void unStandOcupadoNoSeLiberaAlAvanzar() {
         String salida = ejecutar("2", "20");
+        assertFalse(salida.contains("[VENCIDA] R-1"));
         assertFalse(salida.contains("[VENCIDA] R-3"));
     }
 

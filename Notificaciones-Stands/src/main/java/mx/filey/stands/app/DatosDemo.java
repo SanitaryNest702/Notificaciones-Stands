@@ -53,12 +53,13 @@ public final class DatosDemo {
      * una y otra) para que cada una tenga su propia vigencia. Al terminar el reloj marca hoy.
      * Con 15 dias de vigencia y 5 de aviso (configuracion por defecto), "hoy" queda asi:
      * <ul>
-     *   <li>R-1 A-01 Horizonte: reservada hace 14 dias, sin pago; vence manana.</li>
+     *   <li>R-1 A-01 Horizonte: reservada hace 14 dias con pago de mas del minimo; stand Ocupado.</li>
      *   <li>R-2 A-02 Del Sur: reservada hace 12 dias con un pago parcial (bajo el minimo para ocupar); vence en 3 dias.</li>
      *   <li>R-3 B-01 Peninsulares: reservada hace 9 dias con pago de mas del minimo; stand Ocupado.</li>
      *   <li>R-4 A-03 Horizonte: reservada hace 3 dias, sin pago; vence en 12 dias.</li>
      *   <li>R-5 B-02 Del Sur: recien creada hoy; vence en 15 dias.</li>
-     *   <li>B-04 queda Bloqueado por el administrador; A-04 y B-03 siguen Disponibles.</li>
+     *   <li>R-6 B-04 Bombo: recien creada hoy con un pago parcial; vence en 15 dias.</li>
+     *   <li>B-03 queda Bloqueado por el administrador; A-04 sigue Disponible.</li>
      * </ul>
      * Debe llamarse con un reloj creado por {@link #crearReloj()}.
      */
@@ -83,6 +84,7 @@ public final class DatosDemo {
         creadas.add(servicio.reservar("B-02", "E-2"));                       // hoy
         creadas.add(servicio.reservar("B-04", "E-4"));
         servicio.registrarPago("R-6", new BigDecimal("4869.5"));
+        servicioStands.bloquear("B-03");                                      // el administrador bloquea B-03
         return creadas;
     }
 }
