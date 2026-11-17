@@ -5,7 +5,7 @@ Sistema administrativo de venta de stands de la FILEY, con módulo de notificaci
 - Requisitos, criterios de aceptación y excepciones: [`docs/requisitos.md`](docs/requisitos.md)
 - Diagrama de clases (paquetes del sistema): [`docs/Diagrama-de-Clases-paquetes.jpg`](docs/Diagrama-de-Clases-paquetes.jpg)
 - Diagrama de clases (capa de base de datos): [`docs/Diagrama-de-Clases-bd.png`](docs/Diagrama-de-Clases-bd.png)
-- Diagrama Entidad-Relación: [`docs/Diagrama ER.png`](docs/Diagrama-ER.png)
+- Diagrama Entidad-Relación: [`docs/Diagrama ER.png`](docs/Diagrama ER.jpeg)
 
 
 ## Estructura
