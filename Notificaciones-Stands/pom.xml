@@ -66,7 +66,7 @@
                     <execution>
                         <id>mainbd</id>
                         <configuration>
-                            <mainClass>mx.filey.stands.app.MainBD</mainClass>
+                            <mainClass>mx.filey.stands.app.Mainbd</mainClass>
                         </configuration>
                     </execution>
                 </executions>

@@ -12,29 +12,18 @@ import mx.filey.stands.bd.ErrorBaseDatos;
 import mx.filey.stands.bd.InicializadorBD;
 import mx.filey.stands.bd.ReservacionDAO;
 import mx.filey.stands.bd.StandDAO;
-import mx.filey.stands.configuracion.Configuracion;
 import mx.filey.stands.datos.Editorial;
-import mx.filey.stands.datos.Repositorio;
 import mx.filey.stands.datos.Reservacion;
 import mx.filey.stands.datos.Stand;
-import mx.filey.stands.negocio.CalculadoraPrecios;
-import mx.filey.stands.negocio.ServicioStands;
 
-/**
- * Demostración de la capa de base de datos: comprueba la conexión y muestra
- * el contenido de las tablas stands, editoriales y reservaciones.
- *
- * <p>Este programa no tiene reglas de negocio ni SQL: solo conecta las capas
- * (vista -> negocio -> DAO -> base de datos) y presenta los resultados.
- * La simulación con reloj, pagos y avisos sigue en {@link Main}.</p>
- */
-public class MainBD {
+public class Mainbd {
 
     public static void main(String[] args) {
         try {
             ejecutar();
         } catch (ErrorBaseDatos e) {
             System.err.println("ERROR: " + e.getMessage());
+            e.printStackTrace(); // <--- Esto mostrará la SQLException exacta y la línea del error
             System.exit(1);
         }
     }
@@ -50,21 +39,16 @@ public class MainBD {
             System.out.println("Las tablas no existian: se crearon y se cargaron los datos de ejemplo.");
         }
 
-        // Capa BD: un DAO por tabla. Se usan a traves de la interfaz Repositorio.
-        Repositorio<Stand> stands = new StandDAO(bd);
-        Repositorio<Editorial> editoriales = new EditorialDAO(bd);
-        Repositorio<Reservacion> reservaciones = new ReservacionDAO(bd, stands, editoriales);
+        StandDAO standDAO = new StandDAO();
+        EditorialDAO editorialDAO = new EditorialDAO();
+        ReservacionDAO reservacionDAO = new ReservacionDAO();
 
-        mostrarStands(stands.listar());
-        mostrarEditoriales(editoriales.listar());
-        mostrarReservaciones(reservaciones.listar());
+        mostrarStands(standDAO.obtenerTodos());
+        mostrarEditoriales(editorialDAO.obtenerTodas());
+        mostrarReservaciones(reservacionDAO.obtenerTodas());
 
-        // Capa de negocio sobre la BD: el mismo ServicioStands de siempre, sin cambios.
-        ServicioStands servicioStands =
-            new ServicioStands(stands, new CalculadoraPrecios(Configuracion.cargarPorDefecto()));
         System.out.println();
-        System.out.println("Capas: ServicioStands (negocio) leyo " + servicioStands.listar().size()
-            + " stands a traves de StandDAO (bd).");
+        System.out.println("Capas: Consulta completada exitosamente a través de los DAOs y ReadQuery.");
     }
 
     private static String probarConexion(ConexionBD bd) {
@@ -77,8 +61,6 @@ public class MainBD {
                 + e.getMessage(), e);
         }
     }
-
-    // --------------------------------------------------------------- listados
 
     private static void mostrarStands(List<Stand> stands) {
         encabezado("STANDS", stands.size());

@@ -6,92 +6,64 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
 import mx.filey.stands.datos.EstadoStand;
-import mx.filey.stands.datos.Repositorio;
 import mx.filey.stands.datos.Stand;
 
-/**
- * Lee los stands de la tabla {@code stands}. Implementa {@link Repositorio}, así que
- * los servicios de negocio pueden usarlo igual que al repositorio en memoria.
- * En esta fase es de solo lectura.
- */
-public class StandDAO implements Repositorio<Stand> {
+public class StandDAO {
 
-    private static final String SELECT =
-        "SELECT id, metros_cuadrados, precio, estado FROM stands";
-
-    private final ConexionBD bd;
-
-    public StandDAO(ConexionBD bd) {
-        this.bd = bd;
-    }
-
-    @Override
-    public void guardar(Stand stand) {
-        throw new UnsupportedOperationException("StandDAO es de solo lectura en esta fase");
-    }
-
-    @Override
-    public Optional<Stand> buscarPorId(String id) {
-        try (Connection conexion = bd.abrir();
-             PreparedStatement consulta = conexion.prepareStatement(SELECT + " WHERE id = ?")) {
-            consulta.setString(1, id);
-            try (ResultSet fila = consulta.executeQuery()) {
-                return fila.next() ? Optional.of(mapear(fila)) : Optional.empty();
+    public Stand buscarPorId(String id) throws ErrorBaseDatos {
+        String sql = "SELECT id, metros_cuadrados, precio, estado FROM stands WHERE id = ?";
+        Stand stand = null;
+        try (Connection conexion = ConexionBD.cargar().abrir();
+             ReadQuery lector = new ReadQuery(conexion);
+             ResultSet rs = lector.ejecutarConsulta(sql, id)) {
+            
+            if (rs.next()) {
+                stand = new Stand(
+                    rs.getString("id"),
+                    rs.getDouble("metros_cuadrados"),
+                    rs.getBigDecimal("precio"),
+                    EstadoStand.valueOf(rs.getString("estado"))
+                );
             }
         } catch (SQLException e) {
-            throw new ErrorBaseDatos("No se pudo leer el stand " + id + ": " + e.getMessage(), e);
+            throw new ErrorBaseDatos("Error al buscar stand por ID: " + id, e);
         }
+        return stand;
     }
 
-    @Override
-    public List<Stand> listar() {
+    public List<Stand> obtenerTodos() throws ErrorBaseDatos {
+        String sql = "SELECT id, metros_cuadrados, precio, estado FROM stands";
         List<Stand> stands = new ArrayList<>();
-        try (Connection conexion = bd.abrir();
-             PreparedStatement consulta = conexion.prepareStatement(SELECT + " ORDER BY id");
-             ResultSet fila = consulta.executeQuery()) {
-            while (fila.next()) {
-                stands.add(mapear(fila));
+        try (Connection conexion = ConexionBD.cargar().abrir();
+             ReadQuery lector = new ReadQuery(conexion);
+             ResultSet rs = lector.ejecutarConsulta(sql)) {
+            
+            while (rs.next()) {
+                Stand stand = new Stand(
+                    rs.getString("id"),
+                    rs.getDouble("metros_cuadrados"),
+                    rs.getBigDecimal("precio"),
+                    EstadoStand.valueOf(rs.getString("estado"))
+                );
+                stands.add(stand);
             }
         } catch (SQLException e) {
-            throw new ErrorBaseDatos("No se pudo leer la tabla stands: " + e.getMessage(), e);
+            throw new ErrorBaseDatos("Error al obtener todos los stands", e);
         }
         return stands;
     }
 
-    /** Convierte una fila de la tabla en un objeto {@link Stand}. */
-    private static Stand mapear(ResultSet fila) throws SQLException {
-        Stand stand = new Stand(
-            fila.getString("id"),
-            fila.getDouble("metros_cuadrados"),
-            fila.getBigDecimal("precio"));
-        restaurarEstado(stand, EstadoStand.valueOf(fila.getString("estado")));
-        return stand;
-    }
-
-    /**
-     * Un stand nuevo siempre nace DISPONIBLE y solo admite transiciones validas.
-     * Para dejarlo en el estado guardado se recorre el camino permitido
-     * (por ejemplo OCUPADO se alcanza pasando por RESERVADO) sin saltarse las reglas.
-     */
-    private static void restaurarEstado(Stand stand, EstadoStand estado) {
-        switch (estado) {
-            case DISPONIBLE:
-                break;
-            case RESERVADO:
-                stand.cambiarEstado(EstadoStand.RESERVADO);
-                break;
-            case OCUPADO:
-                stand.cambiarEstado(EstadoStand.RESERVADO);
-                stand.cambiarEstado(EstadoStand.OCUPADO);
-                break;
-            case BLOQUEADO:
-                stand.cambiarEstado(EstadoStand.BLOQUEADO);
-                break;
-            default:
-                throw new IllegalStateException("Estado desconocido: " + estado);
+    public void actualizarEstado(String id, EstadoStand estado) throws ErrorBaseDatos {
+        String sql = "UPDATE stands SET estado = ? WHERE id = ?";
+        try (Connection conexion = ConexionBD.cargar().abrir();
+             PreparedStatement pstmt = conexion.prepareStatement(sql)) {
+            
+            pstmt.setString(1, estado.name());
+            pstmt.setString(2, id);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new ErrorBaseDatos("Error al actualizar el estado del stand", e);
         }
     }
 }

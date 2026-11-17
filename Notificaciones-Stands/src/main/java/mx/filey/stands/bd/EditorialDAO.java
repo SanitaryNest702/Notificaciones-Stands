@@ -6,61 +6,62 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
 import mx.filey.stands.datos.Editorial;
-import mx.filey.stands.datos.Repositorio;
 
-/**
- * Lee las editoriales de la tabla {@code editoriales}. En esta fase es de solo lectura.
- */
-public class EditorialDAO implements Repositorio<Editorial> {
+public class EditorialDAO {
 
-    private static final String SELECT = "SELECT id, nombre, correo FROM editoriales";
-
-    private final ConexionBD bd;
-
-    public EditorialDAO(ConexionBD bd) {
-        this.bd = bd;
-    }
-
-    @Override
-    public void guardar(Editorial editorial) {
-        throw new UnsupportedOperationException("EditorialDAO es de solo lectura en esta fase");
-    }
-
-    @Override
-    public Optional<Editorial> buscarPorId(String id) {
-        try (Connection conexion = bd.abrir();
-             PreparedStatement consulta = conexion.prepareStatement(SELECT + " WHERE id = ?")) {
-            consulta.setString(1, id);
-            try (ResultSet fila = consulta.executeQuery()) {
-                return fila.next() ? Optional.of(mapear(fila)) : Optional.empty();
+    public Editorial buscarPorId(String id) throws ErrorBaseDatos {
+        String sql = "SELECT id, nombre, correo FROM editoriales WHERE id = ?";
+        Editorial editorial = null;
+        try (Connection conexion = ConexionBD.cargar().abrir();
+             ReadQuery lector = new ReadQuery(conexion);
+             ResultSet rs = lector.ejecutarConsulta(sql, id)) {
+            
+            if (rs.next()) {
+                editorial = new Editorial(
+                    rs.getString("id"),
+                    rs.getString("nombre"),
+                    rs.getString("correo")
+                );
             }
         } catch (SQLException e) {
-            throw new ErrorBaseDatos("No se pudo leer la editorial " + id + ": " + e.getMessage(), e);
+            throw new ErrorBaseDatos("Error al buscar editorial por ID: " + id, e);
         }
+        return editorial;
     }
 
-    @Override
-    public List<Editorial> listar() {
+    public List<Editorial> obtenerTodas() throws ErrorBaseDatos {
+        String sql = "SELECT id, nombre, correo FROM editoriales";
         List<Editorial> editoriales = new ArrayList<>();
-        try (Connection conexion = bd.abrir();
-             PreparedStatement consulta = conexion.prepareStatement(SELECT + " ORDER BY id");
-             ResultSet fila = consulta.executeQuery()) {
-            while (fila.next()) {
-                editoriales.add(mapear(fila));
+        try (Connection conexion = ConexionBD.cargar().abrir();
+             ReadQuery lector = new ReadQuery(conexion);
+             ResultSet rs = lector.ejecutarConsulta(sql)) {
+            
+            while (rs.next()) {
+                Editorial editorial = new Editorial(
+                    rs.getString("id"),
+                    rs.getString("nombre"),
+                    rs.getString("correo")
+                );
+                editoriales.add(editorial);
             }
         } catch (SQLException e) {
-            throw new ErrorBaseDatos("No se pudo leer la tabla editoriales: " + e.getMessage(), e);
+            throw new ErrorBaseDatos("Error al obtener todas las editoriales", e);
         }
         return editoriales;
     }
 
-    private static Editorial mapear(ResultSet fila) throws SQLException {
-        return new Editorial(
-            fila.getString("id"),
-            fila.getString("nombre"),
-            fila.getString("correo"));
+    public void insertar(Editorial editorial) throws ErrorBaseDatos {
+        String sql = "INSERT INTO editoriales (id, nombre, correo) VALUES (?, ?, ?)";
+        try (Connection conexion = ConexionBD.cargar().abrir();
+             PreparedStatement pstmt = conexion.prepareStatement(sql)) {
+            
+            pstmt.setString(1, editorial.getId());
+            pstmt.setString(2, editorial.getNombre());
+            pstmt.setString(3, editorial.getCorreo());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new ErrorBaseDatos("Error al insertar editorial", e);
+        }
     }
 }

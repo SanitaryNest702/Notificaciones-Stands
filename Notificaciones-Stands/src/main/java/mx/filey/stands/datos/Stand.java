@@ -12,6 +12,14 @@ public class Stand {
     private EstadoStand estado;
 
     public Stand(String id, double metrosCuadrados, BigDecimal precio) {
+        this(id, metrosCuadrados, precio, EstadoStand.DISPONIBLE);
+    }
+
+    /**
+     * Reconstruye un stand con el estado que ya tenía (por ejemplo, al leerlo de la base de datos).
+     * No valida transiciones: el estado se toma tal cual.
+     */
+    public Stand(String id, double metrosCuadrados, BigDecimal precio, EstadoStand estadoInicial) {
         if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("El stand necesita un identificador");
         }
@@ -24,7 +32,10 @@ public class Stand {
         this.id = id;
         this.metrosCuadrados = metrosCuadrados;
         this.precio = precio;
-        this.estado = EstadoStand.DISPONIBLE;
+        if (estadoInicial == null) {
+            throw new IllegalArgumentException("El estado inicial no puede ser nulo");
+        }
+        this.estado = estadoInicial;
     }
 
     public String getId() {
